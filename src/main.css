@@ -1,0 +1,17 @@
+.drag-ready {
+  border: 2px solid black;
+}
+
+.drag-preview {
+  border: 2px solid blue;
+}
+
+.drag {
+  opacity: 0.5;
+  border: 2px solid green;
+}
+
+.drag-over {
+  opacity: 0.5;
+  border: 2px solid red;
+}

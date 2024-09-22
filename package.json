@@ -1,0 +1,15 @@
+{
+  "name": "bug-pragmatic-dnd-onleave",
+  "version": "1.0.0",
+  "description": "Showing bug with onLeave with pragmatic-drag-and-drop",
+  "main": "src/main.tsx",
+  "scripts": {
+    "start": "vite"
+  },
+  "keywords": [
+    "DnD",
+    "Bug"
+  ],
+  "author": "Code Jamboree LLC",
+  "license": "MIT"
+}

@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
@@ -29,13 +29,36 @@ const classNames: Record<State['type'], string> = {
 };
 
 export const ListItem: FC<{
-  task: TaskItem
+  task: TaskItem,
+  sticky: boolean,
+  timestamps: boolean,
+  timestampChangeOnly: boolean
 }> = ({
-  task
+  task,
+  sticky,
+  timestamps,
+  timestampChangeOnly
 }) => {
 
     const ref = useRef<HTMLLIElement>(null);
     const [state, setState] = useState<State>(IDLE);
+    const [message, setMessageReal] = useState('');
+
+    const setMessage = useCallback((newMessage: string) => {
+      if (!timestamps) {
+        setMessageReal(newMessage);
+        return;
+      }
+      if (timestampChangeOnly) {
+        if (message.endsWith(newMessage)) return;
+      }
+
+      const timestamp = Math.floor(performance.now())
+        .toString()
+        .padStart(6, '0');
+
+      setMessageReal(`[${timestamp}] ${newMessage}`);
+    }, [message, timestamps, timestampChangeOnly, setMessageReal]);
 
     useEffect(() => {
       const element = ref.current;
@@ -51,8 +74,25 @@ export const ListItem: FC<{
               render: ({ container }) => setState({ type: 'preview', container })
             })
           },
-          onDragStart: () => setState(DRAGGING),
-          onDrop: () => setState(IDLE)
+          onDragStart: () => {
+            setMessage('draggable.onDragStart');
+            setState(DRAGGING)
+          },
+          onDrop: (args) => {
+            const [target] = args.location.current.dropTargets;
+            let id: string | number = 'nothing';
+            let dropEffect: string = '';
+            let edge: string = 'nothing';
+            if (target && target.data) {
+              dropEffect = target.dropEffect;
+              edge = extractClosestEdge(target.data) ?? 'nothing';
+              if (isDndTask(target.data)) {
+                id = target.data.id;
+              }
+            }
+            setMessage(`draggable.onDrop ${dropEffect} ${edge} of ${id}`);
+            setState(IDLE)
+          }
         }),
         dropTargetForElements({
           element,
@@ -68,14 +108,22 @@ export const ListItem: FC<{
               allowedEdges: ['top', 'bottom']
             }
           ),
-          getIsSticky: () => true,
-          onDragEnter: ({ self }) => setState({
-            type: 'dragging over',
-            closestEdge: extractClosestEdge(self.data)
-          }),
-          onDrag: ({ self }) => {
-            console.log(`onDrag ${task.name}`)
+          getIsSticky: () => sticky,
+          onDragEnter: ({ self }) => {
             const closestEdge = extractClosestEdge(self.data);
+            setMessage(`dropTarget.onDragEnter ${closestEdge}`);
+            setState({
+              type: 'dragging over',
+              closestEdge
+            })
+          },
+          onDrag: ({ self, source }) => {
+            let id: string | number = 'nothing'
+            if (isDndTask(source.data)) {
+              id = source.data.id;
+            }
+            const closestEdge = extractClosestEdge(self.data);
+            setMessage(`dropTarget.onDrag ${id} near ${closestEdge}`);
             setState(current => {
               if (
                 current.type === 'dragging over' &&
@@ -86,13 +134,21 @@ export const ListItem: FC<{
             })
           },
           onDragLeave: () => {
-            console.log(`onDragLeave ${task.name}`);
+            setMessage('dropTarget.onDragLeave');
             setState(IDLE)
           },
-          onDrop: () => setState(IDLE)
+          onDrop: ({ self, source }) => {
+            let id: string | number = 'nothing'
+            let edge = extractClosestEdge(self.data) ?? 'nothing';
+            if (isDndTask(source.data)) {
+              id = source.data.id;
+            }
+            setMessage(`dropTarget.onDrop ${self.dropEffect} ${id} on ${edge}`);
+            setState(IDLE);
+          }
         })
       )
-    }, [task, ref.current, setState]);
+    }, [task, sticky, ref.current, setState, setMessage]);
 
     const isDragging = state !== IDLE;
 
@@ -107,11 +163,12 @@ export const ListItem: FC<{
           onClick={onClick} >
           {task.name}
         </button>
+        {message}
         {state.type === 'preview' ? createPortal(<DragPreview task={task} />, state.container) : null}
       </li>)
   }
 
 
 const DragPreview: FC<{ task: TaskItem }> = ({ task }) => (
-  <div>{task.name}</div>
+  <div className="drag-preview-item">{task.name}</div>
 )

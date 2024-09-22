@@ -1,4 +1,4 @@
-.drag-ready {
+.drag-ready button {
   border: 2px solid black;
 }
 
@@ -6,12 +6,23 @@
   border: 2px solid blue;
 }
 
+.drag-preview-item {
+  border: 2px blue groove;
+  background-color: chartreuse;
+  color: rebeccapurple;
+}
+
 .drag {
   opacity: 0.5;
-  border: 2px solid green;
 }
 
 .drag-over {
-  opacity: 0.5;
-  border: 2px solid red;
+  font-weight: bolder;
+  color: blue;
+}
+
+.drag-over button {
+  border: 2px solid blue;
+  background-color: dodgerblue;
+  color: black;
 }

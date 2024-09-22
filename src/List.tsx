@@ -12,6 +12,9 @@ export const List: FC = () => {
   const [tasks, setTasks] = useState<TaskItem[]>(defaultTasks);
   const [changes, setChanges] = useState<TaskOrderChange[]>([]);
   const [dragId, setDragId] = useState<TaskItem['id'] | undefined>();
+  const [sticky, setSticky] = useState(true);
+  const [timestamps, setTimestamps] = useState(true);
+  const [timestampChangeOnly, setTimestampChangeOnly] = useState(true);
 
   const dragDone = (id: TaskItem['id']) => {
     const element = document.querySelector(`[data-dnd-id="${id}"]`);
@@ -55,7 +58,6 @@ export const List: FC = () => {
         const startIndex = tasks.findIndex(({ id }) => id === drag.id);
         const indexOfTarget = tasks.findIndex(({ id }) => id === drop.id);
         if (Math.min(startIndex, indexOfTarget) < 0) return;
-        console.log(`onDrop ${tasks[startIndex].name} on ${tasks[indexOfTarget].name}`)
         const closestEdgeOfTarget = extractClosestEdge(drop);
         const changes = reorderWithEdge({
           list: tasks,
@@ -79,13 +81,34 @@ export const List: FC = () => {
     })
   }, [tasks]);
 
+  const toggleSticky = () => {
+    setSticky(!sticky);
+  }
+  const toggleTimestamps = () => setTimestamps(!timestamps);
+  const toggleTimestampChangeOnly = () => setTimestampChangeOnly(!timestampChangeOnly);
+
   return (
     <>
       <ul>
         {tasks.map(task => (
-          <ListItem key={task.id} task={task} />
+          <ListItem key={task.id} task={task} sticky={sticky}
+            timestamps={timestamps}
+            timestampChangeOnly={timestampChangeOnly} />
         ))}
       </ul>
+      <label>
+        <input type="checkbox" checked={sticky} onChange={toggleSticky} />
+        Sticky
+      </label>
+      <label>
+        <input type="checkbox" checked={timestamps} onChange={toggleTimestamps} />
+        Timestamps
+      </label>
+      <label>
+        <input type="checkbox" checked={timestampChangeOnly} onChange={toggleTimestampChangeOnly} />
+        Timestamp Change Only
+      </label>
+
     </>
   )
 };

@@ -32,12 +32,14 @@ export const ListItem: FC<{
   task: TaskItem,
   sticky: boolean,
   timestamps: boolean,
-  timestampChangeOnly: boolean
+  timestampChangeOnly: boolean,
+  canDropOnSelf: boolean
 }> = ({
   task,
   sticky,
   timestamps,
-  timestampChangeOnly
+  timestampChangeOnly,
+  canDropOnSelf
 }) => {
 
     const ref = useRef<HTMLLIElement>(null);
@@ -97,8 +99,7 @@ export const ListItem: FC<{
         dropTargetForElements({
           element,
           canDrop: ({ source }) =>
-            source.element !== element &&
-            isDndTask(source.data)
+            isDndTask(source.data) && (canDropOnSelf || source.element !== element)
           ,
           getData: ({ input }) => attachClosestEdge(
             asDndTask(task),
@@ -148,7 +149,7 @@ export const ListItem: FC<{
           }
         })
       )
-    }, [task, sticky, ref.current, setState, setMessage]);
+    }, [task, sticky, canDropOnSelf, ref.current, setState, setMessage]);
 
     const isDragging = state !== IDLE;
 
